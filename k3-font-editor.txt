@@ -1,0 +1,219 @@
+PRODUCT GOALS
+=============
+
+ G1.  The font editor for Kestrel-3 Forth V1.01 should let the user create their own character sets.  This can be useful for certain applications, or for just changing the ROM-default system font.
+
+#G2.  Let the user select a new font with a word USEFONT, or restore the system font using ROMFONT.
+
+#G3.  Both left- and right-handed keyboard operation should be supported.  WASD for left-handed cursor movement, or IJKL for right-handed.
+
+#G4.  The spacebar should be used to toggle the currently selected pixel on or off.
+
+#G5.  A user should be able to start editing at an arbitrary glyph.
+
+#G6.  A user should be able to advance by one glyph up or down in the character set.
+
+#G7.  A user should be able to save the character set into block storage.
+
+#G8.  A command should let the user drop back to a Forth OK prompt.
+
+#G9.  A word should exist which let's the user re-enter the font editor where it left off when the user exited.
+
+(Derived Goals)
+
+#D1.  The user should see a magnified view of the current glyph being edited.
+
+#D2.  A visible cursor must indicate the currently addressed pixel.
+
+#D3.  A word should let the user select a font for editing, or default to the system font selected by ROMFONT.
+
+#D4.  The X,Y position of the cursor must fall between (0,0)-(7,7), inclusive.
+
+#D5.  The currently edited glyph must appear in the context of a 16x16 character matrix on the screen.
+
+
+DEVELOPMENT STRATEGY
+====================
+
+S1.  Develop fatbits view interactively.  Commit final code into block storage.  Document in K3UG chapter.  (#D1)
+
+S2.  Develop cursor visualization interactively.  Commit final code into block storage.  Document in K3UG chapter.  (#D2)
+
+S3.  Confirm the two can interoperate by composing these two programs interactively.  Commit final code into block storage.  Document in K3UG chapter.
+
+S4.  Develop main event loop that recognizes when to quit interactively.  Commit final code into block storage.  Document in K3UG chapter. (#G8)
+
+S5.  Integrate with the visualization code so far.  Commit final code into block storage.  Document in K3UG chapter.  (#G5)
+
+S6.  Create event bindings between WASD/IJKL to cursor movement vocabulary.  Commit final code into block storage.  Document in K3UG chapter.  (#G3 #D4)
+	*NOTE* This might not be easy to do interactively; it may be more economical
+	in this case to rely on more formal methods to ensure proper operation of the
+	code.  Consider using Cleanroom Software Engineering practices for this phase
+	of the project.
+
+S7.  Create the event binding for spacebar to toggle pixels.  Commit final code into block storage.  Document in K3UG.  (#G4)
+
+S8.  Create bindings for advancing or retreating one glyph.  Commit final code into block storage.  Document in K3UG.  (#G6)
+
+S9.  Show a 16x16 character matrix on the screen.  Alter code to highlight the currently edited glyph.  Commit final code into block storage.  Document in K3UG.  (#D5)
+	*NOTE* Be sure to only alter the relevant glyphs.  Updating the entire matrix
+	on every character change will be prohibitively slow.
+
+S10.  Create a word that allows re-entry into the font editor to pick up where it left off upon quitting.  Commit final code into block storage.  Document in K3UG.  (#G9)
+
+S11.  Create a vocabulary to copy the font being edited to/from an arbitrary pair of adjacent blocks, interactively.  Commit final code into block storage.  Document in K3UG.  (#G7 #D3)
+
+S12.  Draw a right and bottom edge to the fatbit matrix.  (#D1)
+
+S13.  Create words USEFONT and ROMFONT to let user alter which font EMIT/TYPE uses.  Commit final code into block storage.  Document in K3UG.  (#G2)
+
+
+SIZE, DEFECT, EFFORT ESTIMATES
+==============================
+
+		New/Chg'd		Effort		Actual
+	Step	Blocks	Defects		(Days)		Defects
+	=======================================================
+	S1	1	0 (done)	0 (done)	0
+	S2	1	0 (done)	0 (done)	0
+	S3	1	0		1		0
+	S4	1	0		0		0
+	S5	1	0		0		1
+	S6	3	1		1
+	S7	1	1		0
+	S8	1	0		0
+	S9	1	1		1
+	S10	1	1		1
+	S11	1	2		0
+	S12	1	0		0
+	S13	1	0		0
+	--------------------------------------------------------
+	TOTAL	15	6		4		1
+
+
+
+EARNED VALUE
+============
+
+* Planned Earned Value
++ Actual Earned Value
+
+	S13                    *
+	S12
+	S11
+	S10
+	 S9              *
+	 S8        *
+	 S7
+	 S6         +
+	 S5  *+
+	 S4
+	 S3
+	 S2
+	 S1
+	-----+-----+-----+-----+-----+-----+-----+-----+--
+	     1     2     3     4     5     6     7     8   day
+
+
+TIME LOG
+========
+2016apr22	S3 09:00 CODE 09:15
+		S3 09:15 TEST 09:22
+
+		S4 09:24 PLAN 09:31
+		S4 10:00 PLAN 10:04
+		S4 10:04 CODE 10:12
+		S4 10:14 DOCS 10:18
+
+		S5 10:19 PLAN 10:28
+		S5 11:00 CODE 11:33
+		S5 11:33 TEST 11:37
+
+		S6 22:10 PLAN 22:26
+		S6 22:29 CODE 23:00	Stupid cat.
+		S6 23:01 CODE 23:09
+		S6 23:10 TEST 23:22
+		S6 23:30 CODE 23:52
+		S6 23:52 TEST 24:14
+
+DEFECT LOG
+==========
+			While	Phase				Phase
+Date		Issue	Fixing	Inject	Start	Type	End	Remove	(Comments on sep. line)
+---------	------  ------  ------  ------  ------  ------  ------  -----------------------
+2016apr22	S3.1	-	BEFORE	09:19	70	09:24	TEST
+
+	SET would not update the currently edited block for some reason.  OR...
+	I thought I was on block 100, but SCR must have held a different value.
+	Not reproducible.  :(
+
+		S4.1	-	BEFORE	10:08	70	10:12	TEST
+
+	SET did not update block 100 again.  Simply redo-ing the instructions
+	seems to help.
+
+		S5.1	-	BEFORE	11:13	70	11:28	TEST
+
+	LIST appears to reset a block's dirty flag.  This prevents me from
+	making multiple block edits and writing them all back with a single
+	call to FLUSH.
+
+	BLOCK was not properly updating the `lastblk` variable when the
+	specified block happened to be in the local block cache.
+
+		S5.2	-	CODE	11:33	20	11:36	TEST
+
+	main not found.  Simply reorder the definitions in the blocks.
+
+		S6.1	-	CODE	22:47	80	22:49	CODE
+
+	Incorrect program logic for bounds limiting the maximum value of the xc variable.
+
+		S6.2	-	CODE	22:52	20	22:52	CODE
+
+	xc versus cx
+
+		S6.3	-	PLAN	23:12	80	23:21	TEST
+
+	cx and cy variables need to be in block 106, not 112.
+
+		S6.4	S6.3	TEST	23:18	80	23:19	TEST
+
+	: toggle cx @ cy @ toggle ;  should read  .... cy @ cursor ;
+
+		S6.5	-	CODE	23:53	40	24:05	TEST
+
+	Console appears unresponsive when testing new event handler logic.
+	It actually is responding, but it's not finding the handlers in the
+	dictionary for some reason.
+
+		S6.6	S6.5	CODE	23:53	30	23:56	TEST
+
+	Call to NAME? underflowed the stack; pointer to word was missing.
+
+		S6.7	S6.5	CODE	23:57	80	24:03	TEST
+
+	Word synthesis buffer had length of 4; should have been 3.
+
+
+PHASE DESCRIPTIONS
+==================
+1 - Planning
+2 - Interactive Experimentation / Design
+3 - Coding
+4 - Integration Test
+5 - Documentation
+
+
+DEFECT DESCRIPTIONS
+===================
+10 - Syntax
+20 - Undefined symbol
+30 - Stack Imbalance
+40 - Unresponsive Crash
+50 - Documentation
+60 - User Experience
+70 - Environment (e.g., bug in Kestrel Forth itself)
+80 - Semantics / Program Logic
+
+
