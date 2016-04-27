@@ -79,16 +79,16 @@ SIZE, DEFECT, EFFORT ESTIMATES
 	S3	1	0		1		0
 	S4	1	0		0		0
 	S5	1	0		0		1
-	S6	3	1		1
-	S7	1	1		0
-	S8	1	0		0
-	S9	1	1		1
+	S6	3	1		1		7
+	S7	1	1		0		5
+	S8	1	0		0		2
+	S9	1	1		1		5
 	S10	1	1		1
 	S11	1	2		0
 	S12	1	0		0
 	S13	1	0		0
 	--------------------------------------------------------
-	TOTAL	15	6		4		1
+	TOTAL	15	6		4		20
 
 
 
@@ -102,11 +102,11 @@ EARNED VALUE
 	S12
 	S11
 	S10
-	 S9              *
+	 S9              *+
 	 S8        *
-	 S7
-	 S6         +
-	 S5  *+
+	 S7         +
+	 S6   +
+	 S5  *
 	 S4
 	 S3
 	 S2
@@ -123,7 +123,7 @@ TIME LOG
 		S4 09:24 PLAN 09:31
 		S4 10:00 PLAN 10:04
 		S4 10:04 CODE 10:12
-		S4 10:14 DOCS 10:18
+		S4 10:14 TEST 10:18
 
 		S5 10:19 PLAN 10:28
 		S5 11:00 CODE 11:33
@@ -134,7 +134,26 @@ TIME LOG
 		S6 23:01 CODE 23:09
 		S6 23:10 TEST 23:22
 		S6 23:30 CODE 23:52
-		S6 23:52 TEST 24:14
+		S6 23:52 TEST 00:14
+
+2016apr23	S7 10:22 PLAN 11:13	Event dispatch logic.
+		S7 11:13 CODE 11:28
+		S7 21:31 PLAN 22:17	Bit set/clear logic.
+		S7 22:25 CODE 22:33
+		S7 22:33 TEST 23:02
+
+2016apr24	S8 14:08 PLAN 14:22
+		S8 14:23 CODE 15:07
+		S8 15:07 TEST 15:20
+
+		S9 17:38 PLAN 18:26
+		S9 20:00 PLAN 20:12
+		S9 20:23 CODE 21:27	Drawing the character sets
+		S9 21:27 TEST 21:34
+		S9 22:01 CODE 23:10	Drawing the current selection highlights.
+		S9 23:10 TEST 23:34
+		S9 23:34 CODE 23:40	Refreshing user chart area.
+		S9 23:40 TEST 00:01
 
 DEFECT LOG
 ==========
@@ -181,7 +200,7 @@ Date		Issue	Fixing	Inject	Start	Type	End	Remove	(Comments on sep. line)
 
 	: toggle cx @ cy @ toggle ;  should read  .... cy @ cursor ;
 
-		S6.5	-	CODE	23:53	40	24:05	TEST
+		S6.5	-	CODE	23:53	40	00:05	TEST
 
 	Console appears unresponsive when testing new event handler logic.
 	It actually is responding, but it's not finding the handlers in the
@@ -191,18 +210,67 @@ Date		Issue	Fixing	Inject	Start	Type	End	Remove	(Comments on sep. line)
 
 	Call to NAME? underflowed the stack; pointer to word was missing.
 
-		S6.7	S6.5	CODE	23:57	80	24:03	TEST
+		S6.7	S6.5	CODE	23:57	80	00:03	TEST
 
 	Word synthesis buffer had length of 4; should have been 3.
 
+2016apr23	S7.1	-	CODE	11:19	60	11:28	CODE
 
-PHASE DESCRIPTIONS
-==================
-1 - Planning
-2 - Interactive Experimentation / Design
-3 - Coding
-4 - Integration Test
-5 - Documentation
+	Overwrote line in block in follow-along code.  Had to recover
+	my own copy of the source code from prior documentation;
+	otherwise a quick fix.
+
+		S7.2	-	PLAN	22:08	80	22:08	PLAN
+
+	Forgot that `mask` returned a proper mask, and not a bit index.
+
+		S7.3	-	PLAN	22:35	20	22:47	TEST
+
+	`cx` and `cy`, and probably other variables, needs to be defined
+	before all the other code blocks, since they're used by everything.
+	Right now, they're bundled in with the cursor handling code.
+
+		S7.4	-	PLAN	22:47	20	22:57	TEST
+
+	`tile` now remains undefined.
+
+		S7.5	-	PLAN	22:57	20	23:02	TEST
+
+	`on?` not defined in the right order.  Moved from block 110
+	to block 112.
+
+2016apr24	S8.1	-	PLAN	15:08	80	15:13	TEST
+
+	Forgot to link the new code block into the font editor's load block.
+
+		S8.2	-	CODE	15:14	20	15:16	TEST
+
+	Cannot find definition of `mag`.
+
+		S9.1	-	PLAN	21:28	20	21:33	TEST
+
+	`fontbuf` undefined prior to first use.  Moved it to global state
+	block.
+
+		S9.2	-	CODE	23:11	80	23:17	TEST
+
+	Severe display corruption.  Missing redefinition of `row`, so code
+	used a version of `row` that was inappropriate for the task.
+
+		S9.3	-	PLAN	23:17	80	23:18	TEST
+
+	Graphics render a half-line too low.  Remove +320 bias on video address.
+
+		S9.4	-	CODE	23:49	80	23:51	TEST
+
+	When updating the small user-defined character, I forgot to fetch the byte
+	at an address, and thus corrupted the video display.
+
+		S9.5	-	CODE	23:51	80	23:51	TEST
+
+	Variable `cy` is not properly accounted for in calculating video address
+	to tweak, thus corrupting visual display and even memory (some bytes
+	end up outside video memory).
 
 
 DEFECT DESCRIPTIONS
