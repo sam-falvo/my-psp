@@ -12,6 +12,8 @@ The Polaris specification includes by reference several external specifications 
 
 - Where this document references the *Wishbone specification* or *Wishbone spec*, please refer to the [Wishbone B4: WISHBONE System-on-Chip (SOC) Interconnection Architecture for Portable IP Cores](http://cdn.opencores.org/downloads/wbspec_b4.pdf) specification.
 
+- Where this document references the *SDB specification* or *SDB spec*, please refer to the [Self-Describing Bus V1.1](http://www.ohwr.org/projects/sdb/wiki) specification.
+
 Requirements will be documented with the following notation:
 
 - (Rx) This requirement MUST be held.
@@ -22,6 +24,8 @@ Requirements will be documented with the following notation:
 After requirements have been settled on and other development phases have been started, requirements may need updating, particularly as *new* requirements are discovered later in the project.  Such requirements will be identified using D instead of R, standing for *derived* requirements.
 
 ## High-Level 1st Generation Kestrel-3 Architecture
+
+This section provides a rough reminder of what the first-generation Kestrel-3 architecture is intended to be.  The goal with this architecture is to achieve a minimally viable computer system.  It is not intended to be fast.  It is not intended to have large storage capacity.  It is not intended to have exceptionally high I/O throughputs.  It is merely intended to serve as a foundation on which these other features can be built, and to demonstrate a working combination of hardware and system software in ROM.
 
     +---------+
     |         |
@@ -87,11 +91,38 @@ Because ROM appears in high memory, interrupt and other RISC-V machine-mode reso
 
 - (R1.5) Polaris MUST allow a machine-mode program to change the `mtvec` contents.  All writable bits, as specified by the supervisor spec, must be supported.
 
+- (R1.6) Polaris MUST cold-boot into machine-mode.
+
 ### SDB ROM
 
-The SDB ROM is used to provide descriptors intended to be compatible with the Self-Describing Bus protocol.  These descriptors help both the system firmware and any loaded operating system to auto-detect what the hardware-level configuration of the Kestrel-3 actually is.
+The SDB ROM is used to provide descriptors intended to be compatible with the [Self-Describing Bus](http://www.ohwr.org/projects/sdb/wiki) protocol.  These descriptors help both the system firmware and any loaded operating system to auto-detect what the hardware-level configuration of the Kestrel-3 actually is.
 
 For example, as of this writing, version 1.01 of Kestrel Forth ROM simply *assumes* the MGIA video framebuffer at $FF0000.  However, it could be enhanced later to look it up in the SDB ROM, so that the same firmware image could run on any FPGA development board.  Similarly, it could use the same SDB ROM image to determine if enhanced capabilities exist, such as color, sound, etc.
 
-The format of the SDB image is beyond the scope of this document.
+The format of the SDB image is beyond the scope of this document; please refer to the SDB spec for more information.
+
+
+## Front-side Bus
+
+The MGIA, KIA, and GPIA all offer a Wishbone B3 and B4 compatible interface.  For this reason, interfacing to these peripherals would be simplest if the processor also utilized the Wishbone interface.
+
+- (R2) Polaris MUST expose a Wishbone B3 or B4 compatible master bus interface.
+
+The system software has been engineered to always fetch or store to memory locations which are naturally aligned to the size of the data.  While most processors today support misaligned accesses in some manner, it adds a degree of complexity to the implementation of the front-side bus logic that I do not feel is appropriate for a first-generation, just get something working design.
+
+- (R2.1) Polaris MUST trap on a misaligned instruction or data access.  The system firmware in ROM is capable of emulating misaligned accesses in software if need be.
+
+The Nexys-2 provides an external "cellular" RAM chip with a 16MB capacity (8 megawords by 16 bits per word).  When used in its simplest mode, emulating a static RAM, it provides a 70ns access time for every word read or written.  This limits the bus to (approximately) 14MTps (mega-transfers per second).
+
+In the Kestrel-2 design, the MGIA is driven with a 25.000MHz clock.  If this clock is divided by two, the resulting 12.5MHz clock can be used to feed the Polaris processor.Even if the bus operates at top speed, 12.5MTps, this is not enough to push the limits of the RAM.  Therefore, risk of running into compatibility issues due to hardware variances is virtually eliminated.
+
+- (R2.2) Per Wishbone spec, Polaris MUST accept a single CLK_I signal, serving as the master clock for the processor.
+
+- (R2.3) Polaris MUST be clocked at 12.5MHz.
+
+The GPIA core provides a 64-bit I/O interface, with 64-bit registers to access these interfaces with.  However, virtually all the other cores used in the system offer at most a 16-bit data path size.
+
+- (R2.4) Polaris MUST expose eight byte-lane select outputs, SEL_O(7..0) to indicate which bytes Polaris expects to be valid on read, or which definitely are valid on write.
+
+- (R2.5) Polaris MUST NOT expose ADR_O(2:0) since the individual SEL_O signals replace them.
 
