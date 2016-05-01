@@ -63,7 +63,9 @@ S10.  Create a word that allows re-entry into the font editor to pick up where i
 
 S11.  Create a vocabulary to copy the font being edited to/from an arbitrary pair of adjacent blocks, interactively.  Commit final code into block storage.  Document in K3UG.  (#G7 #D3)
 
-S12.  Draw a right and bottom edge to the fatbit matrix.  (#D1)
+CANCELLED.
+-S12-  Draw a right and bottom edge to the fatbit matrix.  (#D1)
+CANCELLED.
 
 S13.  Create words USEFONT and ROMFONT to let user alter which font EMIT/TYPE uses.  Commit final code into block storage.  Document in K3UG.  (#G2)
 
@@ -83,12 +85,11 @@ SIZE, DEFECT, EFFORT ESTIMATES
 	S7	1	1		0		5
 	S8	1	0		0		2
 	S9	1	1		1		5
-	S10	1	1		1
-	S11	1	2		0
-	S12	1	0		0
+	S10	1	1		1		1
+	S11	1	2		0		2
 	S13	1	0		0
 	--------------------------------------------------------
-	TOTAL	15	6		4		20
+	TOTAL	15	6		4		23
 
 
 
@@ -98,11 +99,10 @@ EARNED VALUE
 * Planned Earned Value
 + Actual Earned Value
 
-	S13                    *
-	S12
+	S13                    *			+
 	S11
 	S10
-	 S9              *+     +     +
+	 S9              *+     +     +     +     +
 	 S8        *
 	 S7         +
 	 S6   +
@@ -154,6 +154,18 @@ TIME LOG
 		S9 23:10 TEST 23:34
 		S9 23:34 CODE 23:40	Refreshing user chart area.
 		S9 23:40 TEST 00:01
+
+2016apr30	S10 14:00 PLAN 14:30
+		S10 14:30 CODE 14:33
+		S10 14:50 TEST 15:00
+
+		S11 15:21 PLAN 15:42
+		S11 15:42 CODE 16:02
+		S11 16:02 TEST 16:10
+
+		S13 17:33 PLAN 17:41
+		S13 17:41 CODE 17:45
+		S13 17:46 TEST 17:49
 
 DEFECT LOG
 ==========
@@ -272,6 +284,18 @@ Date		Issue	Fixing	Inject	Start	Type	End	Remove	(Comments on sep. line)
 	to tweak, thus corrupting visual display and even memory (some bytes
 	end up outside video memory).
 
+		S10.1	-	PLAN	14:55	40	14:58	TEST
+
+	Stray line of code, legacy from a refactored :-def, caused interpreter
+	to crash due to stack imbalance that it created after interpretation.
+
+		S11.1	-	PLAN	15:48	50	15:51	CODE
+
+	Forgot details about how fonts were laid out in memory.
+
+		S11.2	-	PLAN	16:08	80	16:10	TEST
+
+	`retrieve` didn't.  Order of operands to CMOVE were swapped.
 
 DEFECT DESCRIPTIONS
 ===================
@@ -283,5 +307,4 @@ DEFECT DESCRIPTIONS
 60 - User Experience
 70 - Environment (e.g., bug in Kestrel Forth itself)
 80 - Semantics / Program Logic
-
 
