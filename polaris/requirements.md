@@ -161,64 +161,48 @@ The Polaris specification includes by reference several external specifications 
         PC := PC + 4
     END
 
-### CSRRC Xa, csr
+### CSRRC Xd, Xa, csr
 
+    REG(Xd) := CSR(csr)
     IF Xa > 0 THEN
-        tmp := CSR(csr)
         CSR(csr) := CSR(csr) AND ~REG(Xa)
-        REG(Xa) := tmp
     ELSE
         // no operation
     END
 
-### CSRRCI imm5, csr
+### CSRRCI Xd, imm5, csr
 
+    REG(Xd) := CSR(csr)
     IF imm5 > 0 THEN
-        tmp := CSR(csr)
         CSR(csr) := CSR(csr) AND ~ZX(imm5)
-        REG(Xa) := tmp
-    ELSE
-        // no operation
     END
 
-### CSRRS Xa, csr
+### CSRRS Xd, Xa, csr
 
+    REG(Xd) := CSR(csr)
     IF Xa > 0 THEN
-        tmp := CSR(csr)
         CSR(csr) := CSR(csr) OR REG(Xa)
-        REG(Xa) := tmp
-    ELSE
-        // no operation
     END
 
-### CSRRSI imm5, csr
+### CSRRSI Xd, imm5, csr
 
+    REG(Xd) := CSR(csr)
     IF imm5 > 0 THEN
-        tmp := CSR(csr)
         CSR(csr) := CSR(csr) OR ZX(imm5)
-        REG(Xa) := tmp
-    ELSE
-        // no operation
     END
 
-### CSRRW Xa, csr
+### CSRRW Xd, Xa, csr
 
+    REG(Xd) := CSR(csr)
     IF Xa > 0 THEN
-        tmp := CSR(csr)
         CSR(csr) := REG(Xa)
-        REG(Xa) := tmp
-    ELSE
-        // no operation
     END
 
-### CSRRWI imm5, csr
+### CSRRWI Xd, imm5, csr
 
+    REG(Xd) := CSR(csr)
     IF imm5 > 0 THEN
-        tmp := CSR(csr)
-        CSR(csr) := imm5
-        REG(Xa) := tmp
-    ELSE
-        // no operation
+        CSR(csr) := ZX(imm5)
     END
 
 ### EBREAK
