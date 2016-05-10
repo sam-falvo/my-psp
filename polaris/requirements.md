@@ -1,8 +1,8 @@
-# Polaris Requirements
+# Polaris Processor Core
 
-Polaris is the first Verilog implementation of a RISC-V RV64I and RV64S instruction set compatible processor.  It's intended to serve as the core processor for first-generation Kestrel-3 implementations.  As of this writing, first-generation implementations include:
+## Description
 
-- Digilent Nexys-2 FPGA development board.
+Polaris is the first member of a family of processors conforming to the Redtail Architecture.  It aims to solve a broad range of small systems and peripheral control problems at minimum cost to the user.  It implements the RISC-V RV64I and RV64S instruction sets.
 
 The Polaris specification includes by reference several external specifications that determines RISC-V instruction set compatibility and/or hardware interoperability in the open-hardware community:
  
@@ -14,115 +14,384 @@ The Polaris specification includes by reference several external specifications 
 
 - Where this document references the *SDB specification* or *SDB spec*, please refer to the [Self-Describing Bus V1.1](http://www.ohwr.org/projects/sdb/wiki) specification.
 
-Requirements will be documented with the following notation:
+## Features
 
-- (Rx) This requirement MUST be held.
-- (Rx.1) This requirement MAY be a sub-requirement of Rx, but doesn't have to be.
-- (Rx.2) Requirements invariably change over time.  We use this notation because renumbering all the requirements in the document will become burdensome beyond a certain scope.
-- (Rx.2.1) It's also provides an effectively infinite namespace for related requirements.
+- Wishbone B3 and B4 compatible front-side buses.
+- Split instruction and data buses enables use in a Harvard or Von Neumann architecture design.
+- 64-bit data and address widths
+- 51 instructions
+- 31 integer registers (X0 hardwired to zero)
+- Interrupt capability
+- Illegal instruction traps
+- Multiple bus master support
+- Pipelined architecture
+- 64-bit general purpose output port
+- 64-bit general purpose input port
 
-After requirements have been settled on and other development phases have been started, requirements may need updating, particularly as *new* requirements are discovered later in the project.  Such requirements will be identified using D instead of R, standing for *derived* requirements.
+## Block Diagram
 
-## High-Level 1st Generation Kestrel-3 Architecture
-
-This section provides a rough reminder of what the first-generation Kestrel-3 architecture is intended to be.  The goal with this architecture is to achieve a minimally viable computer system.  It is not intended to be fast.  It is not intended to have large storage capacity.  It is not intended to have exceptionally high I/O throughputs.  It is merely intended to serve as a foundation on which these other features can be built, and to demonstrate a working combination of hardware and system software in ROM.
-
-    +---------+
-    |         |
-    |         |=====\=========\========\=========\===========\=============\
-    |         |     ||        ||       ||        ||          ||            ||
-    |         |  +------+  +-----+  +------+  +------+  +----------+  +---------+
-    | Polaris |  | GPIA |  | KIA |  | MGIA |  | SRAM |  | Boot ROM |  | SDB ROM |
-    |         |  +------+  +-----+  +------+  +------+  +----------+  +---------+
-    |         |     ||        ||       ||        ||          ||            ||
-    |         |=====/=========/========/=========/===========/=============/
-    |         |
-    +---------+
-
-The Polaris processor serves as the Kestrel's prime mover.  Nothing in the Kestrel-3 happens without processor involvement at some level.  In this respect, the Kestrel-3 is architecturally identical to the Kestrel-2, with the key value additions being a 64-bit CPU and access to memory external to the hosting FPGA.
-
-### General Purpose Interface Adapter (GPIA)
-
-The Kestrel-2 utilized a 16-bit GPIA device, with an input port at byte offset 0, and an output port at byte offset 2.  The Kestrel-3 uses a 64-bit version of the GPIA, known as the GPIA-2.  The input port is at byte offset 0, and the output port at byte offset 8.  These devices are otherwise architecturally the same.
-
-Currently, the GPIA(-2) offers the CPU control over mass storage through an SD card interface configured as an SPI slave peripheral.
-
-### Keyboard Interface Adapter (KIA)
-
-The Kestrel-2 and Kestrel-3 Keyboard Interface Adapter (KIA) are identical in function and memory layout.  Please [refer to its datasheet](https://github.com/KestrelComputer/kestrel/tree/master/cores/KIA/doc) for details on its programming interface.
-
-For pragmatic reasons, the KIA used in the `e` emulator is a *10-bit* device, supporting the libSDL2-compatible representation of low-level keyboard scancodes.  This implementation of the KIA is known as the KIA-2.  Bits 8 and 9 of the scancode can be read as the top two bits of the status register.  The KIA-2 is not intended for actual hardware implementation.
-
-### Monochrome Graphics Interface Adapter (MGIA)
-
-The Kestrel-2 utilized a version of the MGIA which offered a 640x200 monochrome, bitmapped display.  The Kestrel-3 uses an enhancement called the MGIA-2, which expands the resolution to 640x480, but is otherwise identical.  This core offers no addressible registers, and locates its video space (for the Nexys-2 implementation) at the fixed address range $FF0000-$FF95FF.
-
-### External RAM
-
-The largest capacity memory accessible to Polaris, by far, is the external RAM.  On the Nexys-2 board, 16MB of "cellular RAM" is provided with a bus protocol compatible with JEDEC-standard static RAMs.  Some cheaper FPGA boards provide 8MB of SDRAM.  Others commonly available provide 64MB of SDRAM.
-
-- (R1.1) Polaris MUST be able to address external static RAM up to 16MB minimum.
-
-### Boot ROM
-
-The most commonly available FPGA development boards all seem to offer at least 1MB of flash ROM for use by the FPGA.  At this time, the compiler tools for the Kestrel-3 assume 1MB of ROM is available for programming at time of synthesis.
-
-- (R1.2)  Polaris MUST be able to address external ROM up to 1MB minimum.
-
-Through some experimentation and natural evolution with the `e` emulator, a memory map like the following evolved.
-
-|From            | To            |What's There|
-|:--------------:|:-------------:|:----------:|
-|0000000000000000|0000000000FFFFFF|RAM|
-|1000000000000000|100000000000000F|GPIA-2|
-|1000000000000010|1FFFFFFFFFFFFFFF|GPIA-2 (mirror)|
-|2000000000000000|2000000000000001|KIA|
-|2000000000000002|2FFFFFFFFFFFFFFF|KIA (mirror)|
-|3000000000000000|30000000000001FF|SDB ROM|
-|3000000000000200|3FFFFFFFFFFFFFFF|SDB ROM (mirror)|
-|4000000000000000|EFFFFFFFFFFFFFFF|unspecified|
-|FFFFFFFFFFF00000|FFFFFFFFFFFFFFFF|Boot ROM|
-
-Because ROM appears in high memory, interrupt and other RISC-V machine-mode resources must appear there as well.
-
-- (R1.3) Per the supervisor spec, Polaris MUST execute its first instruction at $FFFFFFFFFFFFFF00.
-
-- (R1.4) Per the supervisor spec, the `mtvec` register MUST reset to $FFFFFFFFFFFFFE00 upon hard reset.
-
-- (R1.5) Polaris MUST allow a machine-mode program to change the `mtvec` contents.  All writable bits, as specified by the supervisor spec, must be supported.
-
-- (R1.6) Polaris MUST cold-boot into machine-mode.
-
-### SDB ROM
-
-The SDB ROM is used to provide descriptors intended to be compatible with the [Self-Describing Bus](http://www.ohwr.org/projects/sdb/wiki) protocol.  These descriptors help both the system firmware and any loaded operating system to auto-detect what the hardware-level configuration of the Kestrel-3 actually is.
-
-For example, as of this writing, version 1.01 of Kestrel Forth ROM simply *assumes* the MGIA video framebuffer at $FF0000.  However, it could be enhanced later to look it up in the SDB ROM, so that the same firmware image could run on any FPGA development board.  Similarly, it could use the same SDB ROM image to determine if enhanced capabilities exist, such as color, sound, etc.
-
-The format of the SDB image is beyond the scope of this document; please refer to the SDB spec for more information.
+      +---------------------------------------------------------- RESET
+      | +-------------------------------------------------------- CLK
+      | | +------------------------------------------------------ IRQ
+      | | | /===================================================< INP
+      | | | || /================================================> OUT
+      v v v \/ ||
+    +-------------+      Pipeline:
+    |             |     +-------------+     +---------------+
+    | Sequencing  |<--->| Inst. Fetch |<===>|               |
+    | and Control |     +-------------+     |               |
+    |             |<--->| Decode      |     |               |
+    |      +------+     +-------------+     |               |
+    |      |      |<===>| Reg. Fetch  |     | Bus Interface |
+    |      |      |     +-------------+     |      Unit     |<===> Wishbone master bus
+    |      |      |<--->| Operate     |     |               |
+    |      | Regs |     +-------------+     |               |
+    |      |      |<--->| Data R/W    |<===>|               |
+    |      |      |     +-------------+     |               |
+    |      |      |<===>| Writeback   |     |               |
+    +------+------+     +-------------+     +---------------+
 
 
-## Front-side Bus
+## Programming Model
 
-The MGIA, KIA, and GPIA all offer a Wishbone B3 and B4 compatible interface.  For this reason, interfacing to these peripherals would be simplest if the processor also utilized the Wishbone interface.
+    Integer Registers       Core Specific Registers
 
-- (R2) Polaris MUST expose a Wishbone B3 or B4 compatible master bus interface.
+    X0 (always 0)           UCYCLE    (R/O)
+    X1                      UTIME     (R/O)
+    X2                      UINSTRET  (R/O)
+    X3                      
+    X4                      MCPUID    (R/O)
+    X5                      MIMPID    (R/O)
+    X6                      MHARTID   (R/O)
+    X7                      Mstatus
+    X8                      MTVEC
+    X9                      MTDELEG   (R/O)
+    X10                     MIE
+    X11                     MTIMECMP
+    X12                     MTIME
+    X13                     MSCRATCH
+    X14                     MEPC
+    X15                     MCAUSE
+    X16                     MBADADDR
+    X17                     MIP
+    X18                     MTOHOST
+    X19                     MFROMHOST (R/O)
+    X20                     
+    X21                     
+    X22                     
+    X23                     
+    X24                     
+    X25                     
+    X26                     
+    X27                     
+    X28                     
+    X29                     
+    X30                     
+    X31                     
 
-The system software has been engineered to always fetch or store to memory locations which are naturally aligned to the size of the data.  While most processors today support misaligned accesses in some manner, it adds a degree of complexity to the implementation of the front-side bus logic that I do not feel is appropriate for a first-generation, just get something working design.
+    PC
 
-- (R2.1) Polaris MUST trap on a misaligned instruction or data access.  The system firmware in ROM is capable of emulating misaligned accesses in software if need be.
+## Instruction Set Reference
 
-The Nexys-2 provides an external "cellular" RAM chip with a 16MB capacity (8 megawords by 16 bits per word).  When used in its simplest mode, emulating a static RAM, it provides a 70ns access time for every word read or written.  This limits the bus to (approximately) 14MTps (mega-transfers per second).
+### ADD Xd, Xa, Xb
 
-In the Kestrel-2 design, the MGIA is driven with a 25.000MHz clock.  If this clock is divided by two, the resulting 12.5MHz clock can be used to feed the Polaris processor.Even if the bus operates at top speed, 12.5MTps, this is not enough to push the limits of the RAM.  Therefore, risk of running into compatibility issues due to hardware variances is virtually eliminated.
+    REG(Xd) := REG(Xa) + REG(Xb)
 
-- (R2.2) Per Wishbone spec, Polaris MUST accept a single CLK_I signal, serving as the master clock for the processor.
+### ADDI Xd, Xa, imm12
 
-- (R2.3) Polaris MUST be clocked at 12.5MHz.
+    REG(Xd) := REG(Xa) + SX(imm12)
 
-The GPIA core provides a 64-bit I/O interface, with 64-bit registers to access these interfaces with.  However, virtually all the other cores used in the system offer at most a 16-bit data path size.
+### AND Xd, Xa, Xb
 
-- (R2.4) Polaris MUST expose eight byte-lane select outputs, SEL_O(7..0) to indicate which bytes Polaris expects to be valid on read, or which definitely are valid on write.
+    REG(Xd) := REG(Xa) + REG(Xb)
 
-- (R2.5) Polaris MUST NOT expose ADR_O(2:0) since the individual SEL_O signals replace them.
+### ANDI Xd, Xa, imm12
 
+    REG(Xd) := REG(Xa) + SX(imm12)
+
+### AUIPC Xd, imm32
+
+    REG(Xd) := PC + (SX(imm32) AND $FFFFFFFFFFFFF000)
+
+### BEQ Xa, Xb, disp13
+
+    IF REG(Xa) = REG(Xb) THEN
+        PC := PC + 2*disp13
+    ELSE
+        PC := PC + 4
+    END
+
+### BGE Xa, Xb, disp13
+
+    IF REG(Xa) >= REG(Xb) THEN
+        PC := PC + 2*disp13
+    ELSE
+        PC := PC + 4
+    END
+
+### BGEU Xa, Xb, disp13
+
+    IF REG(Xa) >= REG(Xb) THEN
+        PC := PC + 2*disp13
+    ELSE
+        PC := PC + 4
+    END
+
+### BLT Xa, Xb, disp13
+
+    IF REG(Xa) < REG(Xb) THEN
+        PC := PC + 2*disp13
+    ELSE
+        PC := PC + 4
+    END
+
+### BLTU Xa, Xb, disp13
+
+    IF REG(Xa) < REG(Xb) THEN
+        PC := PC + 2*disp13
+    ELSE
+        PC := PC + 4
+    END
+
+### BNE Xa, Xb, disp13
+
+    IF REG(Xa) <> REG(Xb) THEN
+        PC := PC + 2*disp13
+    ELSE
+        PC := PC + 4
+    END
+
+### CSRRC Xa, csr
+
+    IF Xa > 0 THEN
+        tmp := CSR(csr)
+        CSR(csr) := CSR(csr) AND ~REG(Xa)
+        REG(Xa) := tmp
+    ELSE
+        // no operation
+    END
+
+### CSRRCI imm5, csr
+
+    IF imm5 > 0 THEN
+        tmp := CSR(csr)
+        CSR(csr) := CSR(csr) AND ~ZX(imm5)
+        REG(Xa) := tmp
+    ELSE
+        // no operation
+    END
+
+### CSRRS Xa, csr
+
+    IF Xa > 0 THEN
+        tmp := CSR(csr)
+        CSR(csr) := CSR(csr) OR REG(Xa)
+        REG(Xa) := tmp
+    ELSE
+        // no operation
+    END
+
+### CSRRSI imm5, csr
+
+    IF imm5 > 0 THEN
+        tmp := CSR(csr)
+        CSR(csr) := CSR(csr) OR ZX(imm5)
+        REG(Xa) := tmp
+    ELSE
+        // no operation
+    END
+
+### CSRRW Xa, csr
+
+    IF Xa > 0 THEN
+        tmp := CSR(csr)
+        CSR(csr) := REG(Xa)
+        REG(Xa) := tmp
+    ELSE
+        // no operation
+    END
+
+### CSRRWI imm5, csr
+
+    IF imm5 > 0 THEN
+        tmp := CSR(csr)
+        CSR(csr) := imm5
+        REG(Xa) := tmp
+    ELSE
+        // no operation
+    END
+
+### EBREAK
+
+    offset := LSH(MSTATUS AND $06, 5)
+    MEPC := PC
+    MCAUSE := (ebreak)
+    MSTATUS := (MSTATUS AND $FFFFFFFFFFFEF000) OR LSH(MSTATUS AND $1FF, 3) OR 6
+    PC := MTVEC + offset
+
+### ECALL
+
+    offset := LSH(MSTATUS AND $06, 5)
+    MEPC := PC
+    MCAUSE := (ecall)
+    MSTATUS := (MSTATUS AND $FFFFFFFFFFFEF000) OR LSH(MSTATUS AND $1FF, 3) OR 6
+    PC := MTVEC + offset
+
+### ERET
+
+    MSTATUS := (MSTATUS AND $FFFFFFFFFFFEF000) OR RSH(MSTATUS AND $FF8, 3) OR $0206
+    PC := MEPC
+
+### JAL Xd, disp21
+
+    REG(Xd) := PC + 4
+    PC := PC + 2 * SX(disp21)
+
+### JALR Xd, Xa, disp12
+
+    REG(Xd) := PC + 4
+    PC := REG(Xa) + SX(disp12)
+
+### LB Xd, Xa, disp12
+
+    REG(Xd) := SX(ByteAt(REG(Xa) + disp12))
+
+### LBU Xd, Xa, disp12
+
+    REG(Xd) := ZX(ByteAt(REG(Xa) + disp12))
+
+### LD Xd, Xa, disp12
+
+    REG(Xd) := SX(DWordAt(REG(Xa) + disp12))
+
+### LDU Xd, Xa, disp12
+
+    REG(Xd) := ZX(DWordAt(REG(Xa) + disp12))
+
+### LH Xd, Xa, disp12
+
+    REG(Xd) := SX(HWordAt(REG(Xa) + disp12))
+
+### LHU Xd, Xa, disp12
+
+    REG(Xd) := ZX(HWordAt(REG(Xa) + disp12))
+
+### LUI Xd, imm32
+
+    REG(Xd) := SX(imm32) AND $FFFFFFFFFFFFF000
+
+### LW Xd, Xa, disp12
+
+    REG(Xd) := SX(WordAt(REG(Xa) + disp12))
+
+### LWU Xd, Xa, disp12
+
+    REG(Xd) := ZX(WordAt(REG(Xa) + disp12))
+
+### OR Xd, Xa, Xb
+
+    REG(Xd) := REG(Xa) OR REG(Xb)
+
+### ORI Xd, Xa, imm12
+
+    REG(Xd) := REG(Xa) OR SX(imm12)
+
+### SB Xa, Xb, disp12
+
+    ByteAt(REG(Xb) + SX(disp12)) := REG(Xa)
+
+### SD Xa, Xb, disp12
+
+    DWordAt(REG(Xb) + SX(disp12)) := REG(Xa)
+
+### SH Xa, Xb, disp12
+
+    HWordAt(REG(Xb) + SX(disp12)) := REG(Xa)
+
+### SLL Xd, Xa, Xb
+
+    REG(Xd) := LSH(REG(Xa), REG(Xb) AND 63)
+
+### SLLI Xd, Xa, imm12
+
+    IF imm12 < 0 OR imm12 >= 64 THEN
+        TRAP(ILLEGAL_INSN)
+    ELSE
+        REG(Xd) := LSH(REG(Xa), imm12)
+    END
+
+### SLT Xd, Xa, Xb
+
+    IF REG(Xa) < REG(Xb) THEN
+        REG(Xd) := 1
+    ELSE
+        REG(Xd) := 0
+    END
+
+### SLTI Xd, Xa, imm12
+
+    IF REG(Xa) < SX(imm12) THEN
+        REG(Xd) := 1
+    ELSE
+        REG(Xd) := 0
+    END
+
+### SLTIU Xd, Xa, imm12
+
+    IF REG(Xa) < SX(imm12) THEN
+        REG(Xd) := 1
+    ELSE
+        REG(Xd) := 0
+    END
+
+### SLTU Xd, Xa, Xb
+
+    IF REG(Xa) < REG(Xb) THEN
+        REG(Xd) := 1
+    ELSE
+        REG(Xd) := 0
+    END
+
+### SRA Xd, Xa, Xb
+
+    REG(Xd) := ASR(REG(Xa), REG(Xb) AND 63)
+
+### SRAI Xd, Xa, imm12
+
+    IF imm12 < 0 OR imm12 >= 64 THEN
+        TRAP(ILLEGAL_INSN)
+    ELSE
+        REG(Xd) := ASR(REG(Xa), imm12)
+    END
+
+### SRL Xd, Xa, Xb
+
+    REG(Xd) := RSH(REG(Xa), REG(Xb) AND 63)
+
+### SRLI Xd, Xa, imm12
+
+    IF imm12 < 0 OR imm12 >= 64 THEN
+        TRAP(ILLEGAL_INSN)
+    ELSE
+        REG(Xd) := RSH(REG(Xa), imm12)
+    END
+
+### SUB Xd, Xa, Xb
+
+    REG(Xd) := REG(Xa) - REG(Xb)
+
+### SW Xa, Xb, disp12
+
+    WordAt(REG(Xb) + SX(disp12)) := REG(Xa)
+
+### WFI
+
+    WAIT UNTIL (MIP AND MIE) <> 0
+
+### XOR Xd, Xa, Xb
+
+    REG(Xd) := REG(Xa) XOR REG(Xb)
+
+### XORI Xd, Xa, imm12
+
+    REG(Xd) := REG(Xa) XOR SX(imm12)
