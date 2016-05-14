@@ -16,19 +16,21 @@ The Polaris specification includes by reference several external specifications 
 
 ## Features
 
-- Wishbone B3 and B4 compatible front-side bus.
-- 64-bit data and address widths
-- Eight select lines enables memory to be addressed at byte granularity.
-- 51 instructions
-- 31 integer registers (X0 hardwired to zero)
-- 19 CPU Specific Registers (CSRs)
-- External interrupt capability
+- Wishbone B3 and B4 compatible front-side buses.
+- Separate instruction and data bus interfaces permits use in Harvard-architecture designs.
+- Optional Bus Interface Unit (BIU) permits use in Von Neumann architectures. 
+- 64-bit data and address widths.
+- Eight byte select lines enables memory to be addressed at byte granularity.
+- 51 instructions.
+- 31 integer registers (X0 hardwired to zero).
+- 19 CPU Specific Registers (CSRs).
+- Four external interrupts.
+- Built-in wall-clock, cycle, and retired instruction counters to support profiling.
 - Most instructions execute in a single clock cycle.
-- Multiple bus master support
-- Pipelined architecture
-- 64-bit general purpose output port
-- 64-bit general purpose input port
-- Machine-Mode Only.
+- Multiple bus master support.
+- Pipelined architecture.
+- 64-bit general purpose output port.
+- 64-bit general purpose input port.
 
 ## Block Diagram
 
@@ -95,6 +97,21 @@ The Polaris specification includes by reference several external specifications 
 
 ## Instruction Set Reference
 
+Except where noted, all instructions execute with one clock period of latency.
+
+The following notation is used:
+
+| Notation | Meaning |
+|:--------:|:--------|
+|csr|A 12-bit, unsigned, integer constant specifying one of 4096 CPU-Specific Registers.|
+|disp13|A 13-bit, sign-extended displacement from the current instruction's address.  Bit 0 is ignored, letting the assembler pack the value into a 12-bit field.|
+|disp21|A 21-bit, sign-extended displacement from the current instruction's address.  Bit 0 is ignored, letting the assembler pack the value into a 20-bit field.|
+|imm5|A 5-bit, unsigned, integer constant used to specify an immediate operand for CSR manipulation.|
+|imm6|A 6-bit, unsigned, integer constant used to specify how far to shift the contents of an integer register left or right.|
+|imm12|A 12-bit, sign-extended, integer constant ("immediate value").|
+|imm32|A 32-bit, sign-extended, integer constant.|
+|Xn|A number between 0 and 31 inclusive, indicating an integer register X0 to X31.|
+
 ### ADD Xd, Xa, Xb
 
     REG(Xd) := REG(Xa) + REG(Xb)
@@ -118,7 +135,7 @@ The Polaris specification includes by reference several external specifications 
 ### BEQ Xa, Xb, disp13
 
     IF REG(Xa) = REG(Xb) THEN
-        PC := PC + 2*disp13
+        PC := PC + SX(disp13)
     ELSE
         PC := PC + 4
     END
@@ -126,7 +143,7 @@ The Polaris specification includes by reference several external specifications 
 ### BGE Xa, Xb, disp13
 
     IF REG(Xa) >= REG(Xb) THEN
-        PC := PC + 2*disp13
+        PC := PC + SX(disp13)
     ELSE
         PC := PC + 4
     END
@@ -134,7 +151,7 @@ The Polaris specification includes by reference several external specifications 
 ### BGEU Xa, Xb, disp13
 
     IF REG(Xa) >= REG(Xb) THEN
-        PC := PC + 2*disp13
+        PC := PC + SX(disp13)
     ELSE
         PC := PC + 4
     END
@@ -142,7 +159,7 @@ The Polaris specification includes by reference several external specifications 
 ### BLT Xa, Xb, disp13
 
     IF REG(Xa) < REG(Xb) THEN
-        PC := PC + 2*disp13
+        PC := PC + SX(disp13)
     ELSE
         PC := PC + 4
     END
@@ -150,7 +167,7 @@ The Polaris specification includes by reference several external specifications 
 ### BLTU Xa, Xb, disp13
 
     IF REG(Xa) < REG(Xb) THEN
-        PC := PC + 2*disp13
+        PC := PC + SX(disp13)
     ELSE
         PC := PC + 4
     END
@@ -158,7 +175,7 @@ The Polaris specification includes by reference several external specifications 
 ### BNE Xa, Xb, disp13
 
     IF REG(Xa) <> REG(Xb) THEN
-        PC := PC + 2*disp13
+        PC := PC + SX(disp13)
     ELSE
         PC := PC + 4
     END
@@ -221,7 +238,7 @@ The Polaris specification includes by reference several external specifications 
 ### JAL Xd, disp21
 
     REG(Xd) := PC + 4
-    PC := PC + 2 * SX(disp21)
+    PC := PC + SX(disp21)
 
 ### JALR Xd, Xa, disp12
 
@@ -288,13 +305,9 @@ The Polaris specification includes by reference several external specifications 
 
     REG(Xd) := LSH(REG(Xa), REG(Xb) AND 63)
 
-### SLLI Xd, Xa, imm12
+### SLLI Xd, Xa, imm6
 
-    IF imm12 < 0 OR imm12 >= 64 THEN
-        TRAP(ILLEGAL_INSN)
-    ELSE
-        REG(Xd) := LSH(REG(Xa), imm12)
-    END
+    REG(Xd) := LSH(REG(Xa), imm6)
 
 ### SLT Xd, Xa, Xb
 
@@ -332,25 +345,17 @@ The Polaris specification includes by reference several external specifications 
 
     REG(Xd) := ASR(REG(Xa), REG(Xb) AND 63)
 
-### SRAI Xd, Xa, imm12
+### SRAI Xd, Xa, imm6
 
-    IF imm12 < 0 OR imm12 >= 64 THEN
-        TRAP(ILLEGAL_INSN)
-    ELSE
-        REG(Xd) := ASR(REG(Xa), imm12)
-    END
+    REG(Xd) := ASR(REG(Xa), imm6)
 
 ### SRL Xd, Xa, Xb
 
     REG(Xd) := RSH(REG(Xa), REG(Xb) AND 63)
 
-### SRLI Xd, Xa, imm12
+### SRLI Xd, Xa, imm6
 
-    IF imm12 < 0 OR imm12 >= 64 THEN
-        TRAP(ILLEGAL_INSN)
-    ELSE
-        REG(Xd) := RSH(REG(Xa), imm12)
-    END
+    REG(Xd) := RSH(REG(Xa), imm12)
 
 ### SUB Xd, Xa, Xb
 
@@ -452,18 +457,16 @@ This register is read-only.
 
 |63  |62 .. 22|21 .. 17|16  |15 14|13 12|11 10|9   |8  7|6   |5  4|3   |2  1|0   |
 |:--:|:------:|:------:|:--:|:---:|:---:|:---:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-|SD  |0       |VM      |MPRV|XS   |FS   |PRV3 |IE3  |PRV2|IE2 |PRV1|IE1 |PRV0|IE0|
+|SD  |0       |VM      |MPRV|XS   |FS   |PRV3 |IE3 |PRV2|IE2 |PRV1|IE1 |PRV0|IE0 |
 
 A description of the `MSTATUS` fields follows.
 
 |Field|Writeable?|Default|Description|
 |:---:|:--------:|:-----:|:----------|
 |IE0|Y|0|1 if interrupts are *currently* enabled for the current operating mode; 0 otherwise.  After an interrupt or trap is taken, this field is *always* reset to 0.|
-|PRV0|Y|3|0, 1, 2, or 3 if the *current* operating mode is user, supervisor, hypervisor, or machine mode.  After an interrupt or trap is taken, this field is *always* reset to 3.  Note that the `MTDELEG` register is ignored by Polaris, as Polaris does not support hypervisor, supervisor, or user modes at this time.|
-|IE1|Y|0|1 if interrupts *were* enabled in the previous operating mode, prior to the trap or interrupt; 0 otherwise.|
-|PRV1|Y|3|The previous operating mode, just before the interrupt or trap.|
-|IE2, IE3|Y|0|Further stacked versions of the interrupt enable flag.  **NOTE:** The ERET instruction will *always* set IE3.|
-|PRV2, PRV3|Y|3|Further stacked versions of the CPU operating mode.  **NOTE:** The ERET instruction will *always* set PRV3 to 0 (user-mode).|
+|PRV0|N|3|Always set to 3, indicating the *current* operating mode is machine-mode.|
+|IE1, IE2, IE3|Y|0|1 if interrupts *were* enabled in previous operating modes, prior to any interrupts or exceptions taken; 0 otherwise.|
+|PRV1, PRV2, PRV3|N|3|The previous operating modes, just before the interrupt or trap.  Only machine-mode is supported, so these values read 3 and cannot be changed.|
 |FS|N|0|Floating-point register state, useful for multitasking.  Note that floating point is not supported by Polaris, so this field always reports as 0.|
 |XS|N|0|Extension register state.  Reserved for future definition.  Always 0.|
 |MPRV|N|0|Supervisor-level memory privilege flag.  Unused in Polaris.|
@@ -481,6 +484,19 @@ Some fields of this register are writable.
 |TVBA|0|
 
 `MTVEC` points to the base address containing the processor's trap/interrupt handlers.  On power-on reset, `MTVEC` is set to $FFFFFFFFFFFFFE00.
+
+**NOTE:** Actual handlers appear here, *not* vectors to the handlers.  You can still implement vectoring in software if this capability is desired.
+
+Which exception handler gets to handle a trap or interrupt will depend on whether the processor was running in user-, supervisor-, hypervisor-, or machine-mode at the time.
+
+|Current mode|Interrupt handler address|
+|:----------:|:-----------------------:|
+|User|MTVEC+$00|
+|Supervisor|MTVEC+$40|
+|Hypervisor|MTVEC+$80|
+|Machine|MTVEC+$C0|
+
+**NOTE:** Since Polaris does not support user-, supervisor-, or hypervisor-modes of operation, the only interrupt handler the processor will ever invoke is the machine-mode trap handler at MTVEC+$C0.
 
 The TVBA field is writable.
 
