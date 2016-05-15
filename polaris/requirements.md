@@ -550,7 +550,7 @@ This matrix is constructed by plotting instructions on a 16x16 grid. If we conca
 
 Blank instruction slots are guaranteed to raise an illegal instruction trap if executed.
 
-|  |x0 |x1|x2|x3     |x4   |x5   |x6   |x7|x8  |x9  |xA|xB |xC    |xD |xE     |xF|
+| s |x0 |x1|x2|x3     |x4   |x5   |x6   |x7|x8  |x9  |xA|xB |xC    |xD |xE     |xF|
 |:-|:--|:-|:-|:------|:----|:----|:----|:-|:---|:---|:-|:--|:-----|:--|:------|:-|
 |0x|LB |  |  |FENCE  |ADDI |AUIPC|ADDIW|SB|    |    |  |   |ADD\*1|LUI|ADDW\*2|  |
 
