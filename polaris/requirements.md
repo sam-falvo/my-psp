@@ -571,9 +571,9 @@ Blank instruction slots are guaranteed to raise an illegal instruction trap if e
 
 **NOTES**
 
-- *\*1*  This can be either an ADD or SUB, depending on bit 30 of the instruction.
-- *\*2*  This can be either ADDW or SUBW, depending on bit 30 of the instruction.
-- *\*3* These instructions comprise ECALL, EBREAK, ERET, WFI, etc.
+- **1*  This can be either an ADD or SUB, depending on bit 30 of the instruction.
+- **2*  This can be either ADDW or SUBW, depending on bit 30 of the instruction.
+- **3* These instructions comprise ECALL, EBREAK, ERET, WFI, etc.
 
 ## CPU Specific Registers
 
