@@ -307,7 +307,7 @@ Adds or subtracts Xb to/from Xa, putting the result in Xd.  The source values ar
 #### SLLW
 
 |31 .. 25|24 .. 20|19 .. 15|14 .. 12|11 .. 7|6 .. 2|1 0|
-|:------:|:------:|:------:|:-----:|:----:|:-:|
+|:------:|:------:|:------:|:------:|:-----:|:----:|:-:|
 |0|Xb|Xa|000|Xd|01110|11|
 
 Shifts the lower 32-bits of Xa left by the number of bits specified in Xb[4:0].  After sign-extending the result, store in Xd.
@@ -336,7 +336,7 @@ Shifts the lower 32-bits of Xa right by the specified number of bits.  After sig
 
     REG(Xd) := PC + (SX(imm32) AND $FFFFFFFFFFFFF000)
 
-### B
+### BEQ, BGE, BGEU, BLT, BLTU, BNE
 
     BEQ Xa, Xb, disp13
     BGE Xa, Xb, disp13
@@ -457,7 +457,7 @@ These instructions are implemented on the Polaris processor, and currently perfo
     REG(Xd) := PC + 4
     PC := REG(Xa) + SX(disp12)
 
-### L
+### LB, LBU, LH, LHU, LW, LWU, LD, LDU
 
     LB Xd, Xa, disp12
     LH Xd, Xa, disp12
@@ -485,11 +485,15 @@ Retrieves a byte, half-word, word, or double-word from memory at the effective a
 |110 |LWU   |32|N|EA[1:0] = 00|
 |111 |LDU   |64|N|EA[2:0] = 000|
 
+**NOTE.**  LDU and LD currently perform the same operation on Polaris.  However, be aware that this behavior is an artifact of the 64-bit width of the Redtail architecture.  *Do not depend on this behavior.*  Future Redtail revisions may widen to 128-bit data paths.  On these wider architectures, the behavior of LDU and LD will become distinct.
+
     EA := REG(Xa)+disp12
     IF MISALIGNED(EA) THEN
         TRAP(LOAD_ADDR_MISALIGNED)
-    ELSE
+    ELSIF sz[0] = 0 THEN
         REG(Xd) := SX(MEM(sz, REG(Xa) + disp12))
+    ELSE
+        REG(Xd) := ZX(MEM(sz, REG(Xa) + disp12))
     END
 
 ### LUI Xd, imm32
@@ -500,7 +504,7 @@ Retrieves a byte, half-word, word, or double-word from memory at the effective a
 
     REG(Xd) := SX(imm32) AND $FFFFFFFFFFFFF000
 
-### S
+### SB, SH, SW, SD
 
     SB Xa, Xb, disp12
     SH Xa, Xb, disp12
@@ -508,7 +512,7 @@ Retrieves a byte, half-word, word, or double-word from memory at the effective a
     SD Xa, Xb, disp12
 
 |31 .. 25|24 .. 20|19 .. 15|14 .. 12|11 .. 7|6 .. 2|1 0|
-|:------:|:------:|:------:|:-----:|:----:|:-:|
+|:------:|:------:|:------:|:------:|:-----:|:----:|:-:|
 |disp[11:5]|Xb|Xa|sz|disp[4:0]|01000|11|
 
 Stores a byte, half-word, word, or double-word to memory at the provided effective address.  Multi-byte quantities must be aligned to their natural word size.
