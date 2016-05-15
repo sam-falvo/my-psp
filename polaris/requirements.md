@@ -553,6 +553,7 @@ Blank instruction slots are guaranteed to raise an illegal instruction trap if e
 |  |x0 |x1|x2|x3     |x4   |x5   |x6   |x7|x8  |x9  |xA|xB |xC    |xD |xE     |xF|
 |:-|:--|:-|:-|:------|:----|:----|:----|:-|:---|:---|:-|:--|:-----|:--|:------|:-|
 |0x|LB |  |  |FENCE  |ADDI |AUIPC|ADDIW|SB|    |    |  |   |ADD\*1|LUI|ADDW\*2|  |
+
 |1x|   |  |  |       |     |     |     |  |BEQ |JALR|  |JAL|\*3   |   |       |  |
 |2x|LH |  |  |FENCE.I|SLLI |AUIPC|SLLIW|SH|    |    |  |   |SLL   |LUI|SLLW   |  |
 |3x|   |  |  |       |     |     |     |  |BNE |    |  |JAL|CSRRW |   |       |  |
