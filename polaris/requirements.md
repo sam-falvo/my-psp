@@ -21,7 +21,7 @@ The Polaris specification includes by reference several external specifications 
 - Optional Bus Interface Unit (BIU) permits use in Von Neumann architectures. 
 - 64-bit data and address widths.
 - Eight byte select lines enables memory to be addressed at byte granularity.
-- 51 instructions.
+- 61 instructions.
 - 31 integer registers (X0 hardwired to zero).
 - 19 CPU Specific Registers (CSRs).
 - Four external interrupts.
