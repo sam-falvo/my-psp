@@ -162,8 +162,8 @@ These instructions shift the value in Xa left (SLL) or right (SRL) by an amount 
 #### SRA, SUB
 
 |31 |30 |29..25|24 .. 20|19 .. 15|14 .. 12|11 .. 7|6 .. 2|1 0|
-|:-:|:-:|:----:|:------:|:------:|:-----:|:----:|:-:|
-|0|1|0|Xb|Xa|fn3|Xd|01100|11|
+|:-:|:-:|:----:|:------:|:------:|:------:|:-----:|:----:|:-:|
+|0  |1  |0     |Xb      |Xa      |fn3     |Xd     |01100 | 11|
 
 |fn3|Syntax|Operation|
 |:-:|:----:|:-------|
@@ -222,15 +222,15 @@ These instructions set Xd to either 1 or 0, depending on whether or not the valu
 #### SLLI, SRAI, SRLI
 
 |31 |30 |29..26|25 .. 20|19 .. 15|14 .. 12|11 .. 7|6 .. 2|1 0|
-|:-:|:-:|:----:|:------:|:------:|:-----:|:----:|:-:|
-|0|A|0|imm6|Xa|fn3|Xd|00100|11|
+|:-:|:-:|:----:|:------:|:------:|:------:|:-----:|:----:|:-:|
+|0  |A  |0     |imm6    |Xa      |fn3     |Xd     |00100 | 11|
 
 These instructions shift the value in Xa left (SLLI) or right (SRAI, SRLI), respectively.  The value in imm6 determines the number of bit positions moved.  The A flag is 0 for logical shift, 1 for arithmetic.
 
 The A flag **must** be 0 for all left shifts.
 
 |fn3|Syntax|Operation|
-|:-:|:----:|:-------|
+|:-:|:----:|:--------|
 |001|SLLI|REG(Xd) := LSH(REG(Xa), imm6)|
 |101|SRLI, SRAI|REG(Xd) := (IF instruction[62]=1 THEN RSH ELSE ASR)(REG(Xa), imm6)|
 
@@ -260,8 +260,8 @@ Note that `ADDIW Xd, Xa, 0` can be used to sign-extend a 32-bit quantity in Xa.
 #### SLLIW
 
 |31 .. 25|24 .. 20|19 .. 15|14 .. 12|11 .. 7|6 .. 2|1 0|
-|:------:|:------:|:------:|:-----:|:----:|:-:|
-|0|imm5|Xa|000|Xd|00110|11|
+|:------:|:------:|:------:|:------:|:-----:|:----:|:-:|
+|0       |imm5    |Xa      |0       |Xd     |00110 |11 |
 
 Shifts the lower 32-bits of Xa left by the specified number of bits.  After sign-extending the result, store in Xd.
 
@@ -271,8 +271,8 @@ Shifts the lower 32-bits of Xa left by the specified number of bits.  After sign
 #### SRAIW, SRLIW
 
 |31 |30 |29 .. 25|24 .. 20|19 .. 15|14 .. 12|11 .. 7|6 .. 2|1 0|
-|:------:|:------:|:------:|:-----:|:----:|:-:|
-|0|A|0|imm5|Xa|000|Xd|00110|11|
+|:-:|:-:|:------:|:------:|:------:|:------:|:-----:|:----:|:-:|
+|0  |A  |0       |imm5    |Xa      |0       |Xd     |00110 |11 |
 
 |A|Syntax|Function|
 |:-:|:----:|:-------|
@@ -294,13 +294,13 @@ These instructions perform as their ADD, SLL, SRL, SRA, and SUB counter-parts, b
 #### ADDW, SUBW
 
 |31 |30 |29 .. 25|24 .. 20|19 .. 15|14 .. 12|11 .. 7|6 .. 2|1 0|
-|:-:|:-:|:------:|:------:|:------:|:-----:|:----:|:-:|
+|:-:|:-:|:------:|:------:|:------:|:------:|:-----:|:----:|:-:|
 |0|A|0|Xb|Xa|000|Xd|01110|11|
 
 Adds or subtracts Xb to/from Xa, putting the result in Xd.  The source values are treated as 32-bit quantities.  The result is sign-extended to 64-bits before storing in Xd.
 
-|A|Syntax|Function|
-|:-:|:---:|:----|
+|A  |Syntax|Function|
+|:-:|:----:|:-------|
 |0|ADDW|REG(Xd) := {32{r[31], r}}, where r = REG(Xa)[31:0] + REG(Xb)[31:0]|
 |1|SUBW|REG(Xd) := {32{r[31], r}}, where r = REG(Xa)[31:0] - REG(Xb)[31:0]|
 
@@ -318,7 +318,7 @@ Shifts the lower 32-bits of Xa left by the number of bits specified in Xb[4:0]. 
 #### SRAW, SRLW
 
 |31 |30 |29 .. 25|24 .. 20|19 .. 15|14 .. 12|11 .. 7|6 .. 2|1 0|
-|:------:|:------:|:------:|:-----:|:----:|:-:|
+|:-:|:-:|:------:|:------:|:------:|:------:|:-----:|:----:|:-:|
 |0|A|0|Xb|Xa|000|Xd|01110|11|
 
 |A|Syntax|Function|
