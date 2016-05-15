@@ -641,13 +641,13 @@ The `patch` field permits up to 256 *patches* of the interface exposed to the pr
 
 ### MHARTID
 
-|63 .. 4|3 .. 0|
-|:-----:|:----:|
-|0|id|
+|63 .. 0|
+|:-----:|
+|0|
 
-This register is used to uniquely identify the **har**dware **t**hread to the querying software.  In single-processor computers, this register should read as zero.  Otherwise, in multi-processor computers, the `id` field will uniquely identify one of 16 Polaris cores.
+This register is used to uniquely identify the **har**dware **t**hread (HART) to the querying software.  In single-processor computers, this register should read as zero.  Otherwise, in multi-processor computers, an implementation-defined number of low-order bits will uniquely identify the processor amongst a plurality of others.  By convention. processor 0 is responsible for bootstrapping the remainder of the system.
 
-By convention. processor 0 is responsible for bootstrapping the remainder of the system.
+Polaris does not support multi-CPU configurations, and does not support the "A" instruction set extension.  Therefore, this register is hard-wired to zero.
 
 ### MSTATUS
 
@@ -787,11 +787,44 @@ The fields are as follows:
 
 Except for the fields listed above, no other field is writable.
 
+**NOTE.**  The MCAUSE register is a *variable*, not a *queue*.  Since multiple interrupts can occur concurrently, it's strongly recommended that you ignore the cause field when processing interrupts, and just dispatch to IRQ handling logic using a `BLT Xn, X0` instruction.  Once inside that procedure, you can examine individual bits to enforce your own application-specific priority mechanism, or you can rely on bit-shifts to use the default dispatch priorities:
+
+    irq_dispatch:
+        csrrw   x2, x0, mip
+        blt     x2, x0, irq0_fired
+        slli    x2, x2, 4
+        blt     x2, x0, irq1_fired
+        slli    x2, x2, 4
+        blt     x2, x0, irq2_fired
+        slli    x2, x2, 4
+        blt     x2, x0, irq3_fired
+        slli    x2, x2, 44
+        blt     x2, x0, timer_fired
+        slli    x2, x2, 4
+        blt     x2, x0, swi_fired
+        ; No further interrupt bits set, so OK to return.
+        eret
+
+If you re-enable interrupts while processing a previous interrupt request, make sure your interrupt handlers clear the pending bits the relevant bits in the MIP register as work is completed.
+
+    irq0_fired:
+        csrrsi  x0, 1, mstatus ; re-enable interrupts.
+
+        ; ... handle IRQ 0 here.
+
+        csrrci  x0, 1, mstatus ; disable interrupts again.
+        csrrw   x2, x0, mip   ; X2 = MIP
+        addi    x3, x0, -1    ; X3 = $7FFFFFFFFFFFFFFF
+        srli    x3, x3, 1
+        and     x2, x2, x3    ; X2 = BIT_CLEAR(X2, 63)
+        csrrw   x0, x2, mip
+        jal     x0, irq_dispatch
+
 ### MBADADDR
 
 |63 .. 0|
-|:-----:
-|addr|
+|:-----:|
+|addr   |
 
 When a trap is taken, this register will contain any fault-related effective address that the processor was trying to use at the time.
 
