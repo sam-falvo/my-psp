@@ -913,8 +913,8 @@ The following causes for interrupts are supported, with IRQ0 having the highest 
 
 |Cause Code|Description|Why|
 |:--------:|:----------|:--|
-| 0|Reserved.|Not currently generated.|
-| 1|Reserved.|Not currently generated.|
+| 0|SI|Software Interrupt.|
+| 1|TI|Timer Interrupt.  MTIME[31:0] = MTIMECMP|
 | 2|Reserved.|Not currently generated.|
 | 3|Reserved.|Not currently generated.|
 | 4|Reserved.|Not currently generated.|
