@@ -550,25 +550,24 @@ This matrix is constructed by plotting instructions on a 16x16 grid. If we conca
 
 Blank instruction slots are guaranteed to raise an illegal instruction trap if executed.
 
-|  |x0 |x1|x2|x3     |x4   |x5   |x6   |x7|x8  |x9  |xA|xB |xC    |xD |xE     |xF|
+|   |x0 |x1 |x2 |x3     |x4   |x5   |x6   |x7 |x8  |x9  |xA |xB |xC    |xD |xE     |xF |
 |:--|:--|:--|:--|:------|:----|:----|:----|:--|:---|:---|:--|:--|:-----|:--|:------|:--|
-|0x|LB |  |  |FENCE  |ADDI |AUIPC|ADDIW|SB|    |    |  |   |ADD\*1|LUI|ADDW\*2|  |
-
-|1x|   |  |  |       |     |     |     |  |BEQ |JALR|  |JAL|\*3   |   |       |  |
-|2x|LH |  |  |FENCE.I|SLLI |AUIPC|SLLIW|SH|    |    |  |   |SLL   |LUI|SLLW   |  |
-|3x|   |  |  |       |     |     |     |  |BNE |    |  |JAL|CSRRW |   |       |  |
-|4x|LW |  |  |       |SLTI |AUIPC|     |SW|    |    |  |   |SLT   |LUI|       |  |
-|5x|   |  |  |       |     |     |     |  |    |    |  |JAL|CSRRS |   |       |  |
-|6x|LD |  |  |       |SLTIU|AUIPC|     |SD|    |    |  |   |SLTU  |LUI|       |  |
-|7x|   |  |  |       |     |     |     |  |    |    |  |JAL|CSRRC |   |       |  |
-|8x|LBU|  |  |       |XORI |AUIPC|     |  |    |    |  |   |XOR   |LUI|       |  |
-|9x|   |  |  |       |     |     |     |  |BLT |    |  |JAL|CSRRWI|   |       |  |
-|Ax|LHU|  |  |       |SRxI |AUIPC|SRxIW|  |    |    |  |   |SRx   |LUI|SRxW   |  |
-|Bx|   |  |  |       |     |     |     |  |BGE |    |  |JAL|CSRRSI|   |       |  |
-|Cx|LWU|  |  |       |ORI  |AUIPC|     |  |    |    |  |   |OR    |LUI|       |  |
-|Dx|   |  |  |       |     |     |     |  |BLTU|    |  |JAL|CSRRCI|   |       |  |
-|Ex|LDU|  |  |       |ANDI |AUIPC|     |  |    |    |  |   |AND   |LUI|       |  |
-|Fx|   |  |  |       |     |     |     |  |BGEU|    |  |JAL|      |   |       |  |
+|0x |LB |   |   |FENCE  |ADDI |AUIPC|ADDIW|SB |    |    |   |   |ADD\*1|LUI|ADDW\*2|   |
+|1x |   |   |   |       |     |     |     |   |BEQ |JALR|   |JAL|\*3   |   |       |   |
+|2x |LH |   |   |FENCE.I|SLLI |AUIPC|SLLIW|SH |    |    |   |   |SLL   |LUI|SLLW   |   |
+|3x |   |   |   |       |     |     |     |   |BNE |    |   |JAL|CSRRW |   |       |   |
+|4x |LW |   |   |       |SLTI |AUIPC|     |SW |    |    |   |   |SLT   |LUI|       |   |
+|5x |   |   |   |       |     |     |     |   |    |    |   |JAL|CSRRS |   |       |   |
+|6x |LD |   |   |       |SLTIU|AUIPC|     |SD |    |    |   |   |SLTU  |LUI|       |   |
+|7x |   |   |   |       |     |     |     |   |    |    |   |JAL|CSRRC |   |       |   |
+|8x |LBU|   |   |       |XORI |AUIPC|     |   |    |    |   |   |XOR   |LUI|       |   |
+|9x |   |   |   |       |     |     |     |   |BLT |    |   |JAL|CSRRWI|   |       |   |
+|Ax |LHU|   |   |       |SRxI |AUIPC|SRxIW|   |    |    |   |   |SRx   |LUI|SRxW   |   |
+|Bx |   |   |   |       |     |     |     |   |BGE |    |   |JAL|CSRRSI|   |       |   |
+|Cx |LWU|   |   |       |ORI  |AUIPC|     |   |    |    |   |   |OR    |LUI|       |   |
+|Dx |   |   |   |       |     |     |     |   |BLTU|    |   |JAL|CSRRCI|   |       |   |
+|Ex |LDU|   |   |       |ANDI |AUIPC|     |   |    |    |   |   |AND   |LUI|       |   |
+|Fx |   |   |   |       |     |     |     |   |BGEU|    |   |JAL|      |   |       |   |
 
 **NOTES**
 
